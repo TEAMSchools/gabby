@@ -1,7 +1,7 @@
 USE gabby 
 GO
 
-CREATE OR ALTER VIEW gabby.reporting.student_analysis_long AS
+--CREATE OR ALTER VIEW gabby.reporting.student_analysis_long AS
 
 WITH scaffold AS (
   SELECT co.student_number
@@ -285,3 +285,33 @@ JOIN gabby.powerschool.gpa_detail f
   ON s.academic_year = f.academic_year
  AND s.student_number = f.student_number
  AND f.is_curterm = 1
+
+UNION ALL
+
+SELECT s.student_number
+      ,s.studentid
+      ,s.db_name
+      ,s.lastfirst
+      ,s.academic_year
+      ,s.region
+      ,s.schoolid
+      ,s.grade_level
+      ,s.is_pathways
+      ,s.lep_status
+      ,s.is_sped
+      ,s.credittype
+      ,s.course_number
+      ,s.course_name
+      ,s.illuminate_subject
+      ,s.teachernumber
+      ,s.teacher_df_number
+      ,s.teacher_preferred_name
+      
+      ,'Literacy' AS domain
+      ,'Distance from Goal - EOY' AS metric_name
+      ,lit.lvl_num - lit.goal_num AS metric_value
+FROM scaffold s
+JOIN gabby.lit.achieved_by_round_static lit
+  ON s.academic_year = lit.academic_year
+ AND s.student_number = lit.student_number
+ AND lit.is_curterm = 1
