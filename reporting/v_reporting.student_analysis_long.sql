@@ -22,6 +22,15 @@ WITH scaffold AS (
         ,enr.teachernumber
         ,st.df_employee_number AS teacher_df_number
         ,st.preferred_name AS teacher_preferred_name
+        ,CASE WHEN enr.illuminate_subject = 'Text Study' THEN CONCAT('ELA0',co.grade_level) 
+            WHEN enr.illuminate_subject = 'English 100' THEN 'ELA09'
+            WHEN enr.illuminate_subject = 'English 200' THEN 'ELA10'
+            WHEN enr.illuminate_subject IN ('English 300','AP Language')  THEN 'ELA11'
+            WHEN enr.illuminate_subject = 'Algebra I' THEN 'ALG01'
+            WHEN enr.illuminate_subject = 'Geometry' THEN 'GEO01'
+            WHEN enr.illuminate_subject = 'Algebra II' THEN 'ALG02'
+            WHEN enr.illuminate_subject = 'Mathematics' AND co.school_level <> 'HS' THEN CONCAT('MAT0',co.grade_level)
+            ELSE NULL END AS nj_test_code
   FROM gabby.powerschool.cohort_identifiers_static co
   JOIN gabby.powerschool.course_enrollments_static enr
     ON co.student_number = enr.student_number
@@ -315,3 +324,61 @@ JOIN gabby.lit.achieved_by_round_static lit
   ON s.academic_year = lit.academic_year
  AND s.student_number = lit.student_number
  AND lit.is_curterm = 1
+
+UNION ALL
+
+SELECT s.student_number
+      ,s.studentid
+      ,s.db_name
+      ,s.lastfirst
+      ,s.academic_year
+      ,s.region
+      ,s.schoolid
+      ,s.grade_level
+      ,s.is_pathways
+      ,s.lep_status
+      ,s.is_sped
+      ,s.credittype
+      ,s.course_number
+      ,s.course_name
+      ,s.illuminate_subject
+      ,s.teachernumber
+      ,s.teacher_df_number
+      ,s.teacher_preferred_name
+      ,'state_testing' AS domain
+      ,'njsla_scale_score' AS metric_name
+      ,par.test_scale_score AS metric_value
+FROM scaffold s
+JOIN parcc.summative_record_file_clean par
+  ON s.nj_test_code = par.test_code
+ AND s.student_number = par.local_student_identifier
+ AND s.academic_year = par.academic_year
+
+UNION ALL
+
+SELECT s.student_number
+      ,s.studentid
+      ,s.db_name
+      ,s.lastfirst
+      ,s.academic_year
+      ,s.region
+      ,s.schoolid
+      ,s.grade_level
+      ,s.is_pathways
+      ,s.lep_status
+      ,s.is_sped
+      ,s.credittype
+      ,s.course_number
+      ,s.course_name
+      ,s.illuminate_subject
+      ,s.teachernumber
+      ,s.teacher_df_number
+      ,s.teacher_preferred_name
+      ,'state_testing' AS domain
+      ,'njsla_performance_level' AS metric_name
+      ,par.test_performance_level AS metric_value
+FROM scaffold s
+JOIN parcc.summative_record_file_clean par
+  ON s.nj_test_code = par.test_code
+ AND s.student_number = par.local_student_identifier
+ AND s.academic_year = par.academic_year
