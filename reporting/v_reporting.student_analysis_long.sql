@@ -1,7 +1,7 @@
 USE gabby 
 GO
 
---CREATE OR ALTER VIEW gabby.reporting.student_analysis_long AS
+CREATE OR ALTER VIEW gabby.reporting.student_analysis_long AS
 
 WITH scaffold AS (
   SELECT co.student_number
@@ -43,7 +43,7 @@ WITH scaffold AS (
     ON enr.teachernumber = st.ps_teachernumber COLLATE Latin1_General_BIN
   WHERE co.rn_year = 1
     AND co.grade_level != 99
-    AND co.academic_year = 2018
+    AND co.academic_year = 2018 /*do we try to remove this at some point?*/
  )
 
 ,student_attendance AS (
@@ -58,6 +58,37 @@ WITH scaffold AS (
           ,psa.yearid
           ,psa.db_name
   )
+
+,words_read AS (
+  SELECT student_number
+        ,academic_year
+        ,words
+  FROM renaissance.ar_progress_to_goals
+  WHERE reporting_term = 'ARY'
+  AND words > 0
+  )
+
+,act AS (
+SELECT student_number
+      ,academic_year
+      ,MAX(scale_score) AS act_max_composite
+FROM tableau.act_prep_scores act
+WHERE subject_area = 'Composite'
+  AND ACT_type = 'REAL'
+GROUP BY student_number
+        ,academic_year
+  )
+
+,stored_grades AS (
+
+  SELECT studentid
+        ,db_name
+        ,academic_year
+        ,course_number
+        ,[percent] AS grade_percent
+  FROM powerschool.storedgrades
+  WHERE storecode = 'Y1'
+   )
 
 SELECT s.student_number
       ,s.studentid
@@ -382,3 +413,89 @@ JOIN parcc.summative_record_file_clean par
   ON s.nj_test_code = par.test_code
  AND s.student_number = par.local_student_identifier
  AND s.academic_year = par.academic_year
+
+UNION ALL
+
+SELECT s.student_number
+      ,s.studentid
+      ,s.db_name
+      ,s.lastfirst
+      ,s.academic_year
+      ,s.region
+      ,s.schoolid
+      ,s.grade_level
+      ,s.is_pathways
+      ,s.lep_status
+      ,s.is_sped
+      ,s.credittype
+      ,s.course_number
+      ,s.course_name
+      ,s.illuminate_subject
+      ,s.teachernumber
+      ,s.teacher_df_number
+      ,s.teacher_preferred_name
+      ,'Literacy' AS domain
+      ,'words_read' AS metric_name
+      ,w.words AS metric_value
+FROM scaffold s
+JOIN words_read w
+  ON s.academic_year = w.academic_year
+ AND s.student_number = w.student_number
+
+UNION ALL
+
+SELECT s.student_number
+      ,s.studentid
+      ,s.db_name
+      ,s.lastfirst
+      ,s.academic_year
+      ,s.region
+      ,s.schoolid
+      ,s.grade_level
+      ,s.is_pathways
+      ,s.lep_status
+      ,s.is_sped
+      ,s.credittype
+      ,s.course_number
+      ,s.course_name
+      ,s.illuminate_subject
+      ,s.teachernumber
+      ,s.teacher_df_number
+      ,s.teacher_preferred_name
+      ,'act' AS domain
+      ,'act_max_composite_score' AS metric_name
+      ,a.act_max_composite AS metric_value
+FROM scaffold s
+JOIN act a
+  ON s.academic_year = a.academic_year
+ AND s.student_number = a.student_number
+
+UNION ALL
+
+SELECT s.student_number
+      ,s.studentid
+      ,s.db_name
+      ,s.lastfirst
+      ,s.academic_year
+      ,s.region
+      ,s.schoolid
+      ,s.grade_level
+      ,s.is_pathways
+      ,s.lep_status
+      ,s.is_sped
+      ,s.credittype
+      ,s.course_number
+      ,s.course_name
+      ,s.illuminate_subject
+      ,s.teachernumber
+      ,s.teacher_df_number
+      ,s.teacher_preferred_name
+      ,'course_grade' AS domain
+      ,'eoy_grade' AS metric_name
+      ,g.grade_percent AS metric_value
+FROM scaffold s
+JOIN stored_grades g
+  ON s.academic_year = g.academic_year
+ AND s.studentid = g.studentid
+ AND s.db_name = g.db_name
+ AND s.course_number = g.course_number
