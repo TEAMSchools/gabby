@@ -1,7 +1,7 @@
 USE gabby 
 GO
 
-CREATE OR ALTER VIEW gabby.reporting.student_analysis_long AS
+--CREATE OR ALTER VIEW gabby.reporting.student_analysis_long AS
 
 WITH scaffold AS (
   SELECT co.student_number
@@ -14,6 +14,8 @@ WITH scaffold AS (
         ,co.grade_level
         ,co.is_pathways
         ,co.lep_status
+        ,co.boy_status
+        ,co.eoy_status
         ,CASE WHEN co.iep_status != 'No IEP' THEN 1 ELSE 0 END AS is_sped
         ,enr.credittype
         ,enr.course_number
@@ -44,6 +46,7 @@ WITH scaffold AS (
   WHERE co.rn_year = 1
     AND co.grade_level != 99
     AND co.academic_year = 2018 /*do we try to remove this at some point?*/
+    --AND enr.credittype IN ('MATH','ENG') /*This would remove a lot of folks...it that what we want to do?*/
  )
 
 ,student_attendance AS (
@@ -108,6 +111,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'Internal Assessments' AS domain
       ,LOWER(d.module_number) + '_pct_correct' AS metric_name
       ,d.percent_correct AS metric_value
@@ -140,6 +145,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'Internal Assessments' AS domain
       ,LOWER(d.module_number) + '_performance_band' AS metric_name
       ,d.performance_band_number AS metric_value
@@ -172,6 +179,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'ETR' AS domain
       ,'EOY_ETR' AS metric_name
       ,d.etr_score AS metric_value
@@ -201,6 +210,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'Self_and_Others' AS domain
       ,'EOY_SO' AS metric_name
       ,d.so_score AS metric_value
@@ -230,6 +241,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'overall_pm_score' AS domain
       ,o.pm_term COLLATE Latin1_General_BIN AS metric_name
       ,o.overall_score AS metric_value
@@ -259,6 +272,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'student_attendance' AS domain
       ,'EOY_attendance' AS metric_name
       ,a.ada AS metric_value
@@ -288,6 +303,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'student_gpa' AS domain
       ,'gpa' AS metric_name
       ,g.gpa_y1 AS metric_value
@@ -317,6 +334,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'student_fails' AS domain
       ,'classes_failed' AS metric_name
       ,f.n_failing_y1 AS metric_value
@@ -346,7 +365,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
-      
+      ,s.boy_status
+      ,s.eoy_status
       ,'Literacy' AS domain
       ,'Distance from Goal - EOY' AS metric_name
       ,lit.lvl_num - lit.goal_num AS metric_value
@@ -376,6 +396,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'state_testing' AS domain
       ,'njsla_scale_score' AS metric_name
       ,par.test_scale_score AS metric_value
@@ -405,6 +427,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'state_testing' AS domain
       ,'njsla_performance_level' AS metric_name
       ,par.test_performance_level AS metric_value
@@ -434,6 +458,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'Literacy' AS domain
       ,'words_read' AS metric_name
       ,w.words AS metric_value
@@ -462,6 +488,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'act' AS domain
       ,'act_max_composite_score' AS metric_name
       ,a.act_max_composite AS metric_value
@@ -490,6 +518,8 @@ SELECT s.student_number
       ,s.teachernumber
       ,s.teacher_df_number
       ,s.teacher_preferred_name
+      ,s.boy_status
+      ,s.eoy_status
       ,'course_grade' AS domain
       ,'eoy_grade' AS metric_name
       ,g.grade_percent AS metric_value
